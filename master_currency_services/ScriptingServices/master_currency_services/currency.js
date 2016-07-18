@@ -17,7 +17,11 @@ function handleRequest() {
 	var method = request.getMethod();
 	method = method.toUpperCase();
 	
+	//get primary keys (one primary key is supported!)
+	var idParameter = entityMaster_currency.getPrimaryKey();
+	
 	// retrieve the id as parameter if exist 
+	var id = xss.escapeSql(request.getParameter(idParameter));
 	var count = xss.escapeSql(request.getParameter('count'));
 	var metadata = xss.escapeSql(request.getParameter('metadata'));
 	var sort = xss.escapeSql(request.getParameter('sort'));
@@ -32,24 +36,36 @@ function handleRequest() {
 		offset = 0;
 	}
 	
-	if(!entityMaster_currency.hasConflictingParameters(null, count, metadata)) {
+	if(!entityMaster_currency.hasConflictingParameters(id, count, metadata)) {
 		// switch based on method type
-		if ((method === 'GET')) {
+		if ((method === 'POST')) {
+			// create
+			entityMaster_currency.createMaster_currency();
+		} else if ((method === 'GET')) {
 			// read
-			if (count !== null) {
+			if (id) {
+				entityMaster_currency.readMaster_currencyEntity(id);
+			} else if (count !== null) {
 				entityMaster_currency.countMaster_currency();
 			} else if (metadata !== null) {
 				entityMaster_currency.metadataMaster_currency();
 			} else {
 				entityMaster_currency.readMaster_currencyList(limit, offset, sort, desc);
 			}
+		} else if ((method === 'PUT')) {
+			// update
+			entityMaster_currency.updateMaster_currency();    
+		} else if ((method === 'DELETE')) {
+			// delete
+			if(entityMaster_currency.isInputParameterValid(idParameter)){
+				entityMaster_currency.deleteMaster_currency(id);
+			}
 		} else {
-			// create, update, delete
-			entityMaster_currency.printError(response.METHOD_NOT_ALLOWED, 4, "Method not allowed"); 
+			entityMaster_currency.printError(response.BAD_REQUEST, 4, "Invalid HTTP Method", method);
 		}
 	}
 	
 	// flush and close the response
-	response.getWriter().flush();
-	response.getWriter().close();
+	response.flush();
+	response.close();
 }

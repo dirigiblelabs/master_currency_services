@@ -7,6 +7,84 @@ var database = require("db/database");
 
 var datasource = database.getDatasource();
 
+// create entity by parsing JSON object from request body
+exports.createMaster_currency = function() {
+    var input = request.readInputText();
+    var requestBody = JSON.parse(input);
+    var connection = datasource.getConnection();
+    try {
+        var sql = "INSERT INTO MASTER_CURRENCY (";
+        sql += "CURRENCY_ID";
+        sql += ",";
+        sql += "CURRENCY_CODE";
+        sql += ",";
+        sql += "CURRENCY_ENTITY";
+        sql += ",";
+        sql += "CURRENCY_NAME";
+        sql += ",";
+        sql += "CURRENCY_NUMERIC_CODE";
+        sql += ",";
+        sql += "CURRENCY_MINOR_UNIT";
+        sql += ") VALUES ("; 
+        sql += "?";
+        sql += ",";
+        sql += "?";
+        sql += ",";
+        sql += "?";
+        sql += ",";
+        sql += "?";
+        sql += ",";
+        sql += "?";
+        sql += ",";
+        sql += "?";
+        sql += ")";
+
+        var statement = connection.prepareStatement(sql);
+        var i = 0;
+        var id = datasource.getSequence('MASTER_CURRENCY_CURRENCY_ID').next();
+        statement.setInt(++i, id);
+        statement.setString(++i, requestBody.currency_code);
+        statement.setString(++i, requestBody.currency_entity);
+        statement.setString(++i, requestBody.currency_name);
+        statement.setInt(++i, requestBody.currency_numeric_code);
+        statement.setInt(++i, requestBody.currency_minor_unit);
+        statement.executeUpdate();
+		response.println(id);
+        return id;
+    } catch(e) {
+        var errorCode = response.BAD_REQUEST;
+        exports.printError(errorCode, errorCode, e.message, sql);
+    } finally {
+        connection.close();
+    }
+    return -1;
+};
+
+// read single entity by id and print as JSON object to response
+exports.readMaster_currencyEntity = function(id) {
+    var connection = datasource.getConnection();
+    try {
+        var result;
+        var sql = "SELECT * FROM MASTER_CURRENCY WHERE " + exports.pkToSQL();
+        var statement = connection.prepareStatement(sql);
+        statement.setInt(1, id);
+        
+        var resultSet = statement.executeQuery();
+        if (resultSet.next()) {
+            result = createEntity(resultSet);
+        } else {
+        	exports.printError(response.NOT_FOUND, 1, "Record with id: " + id + " does not exist.", sql);
+        }
+        var jsonResponse = JSON.stringify(result, null, 2);
+        response.println(jsonResponse);
+    } catch(e){
+        var errorCode = response.BAD_REQUEST;
+        exports.printError(errorCode, errorCode, e.message, sql);
+    } finally {
+        connection.close();
+    }
+};
+
 // read all entities and print them as JSON array to response
 exports.readMaster_currencyList = function(limit, offset, sort, desc) {
     var connection = datasource.getConnection();
@@ -35,7 +113,7 @@ exports.readMaster_currencyList = function(limit, offset, sort, desc) {
         response.println(jsonResponse);
     } catch(e){
         var errorCode = response.BAD_REQUEST;
-        exports.printError(errorCode, errorCode, e.message);
+        exports.printError(errorCode, errorCode, e.message, sql);
     } finally {
         connection.close();
     }
@@ -44,6 +122,7 @@ exports.readMaster_currencyList = function(limit, offset, sort, desc) {
 //create entity as JSON object from ResultSet current Row
 function createEntity(resultSet) {
     var result = {};
+	result.currency_id = resultSet.getInt("CURRENCY_ID");
     result.currency_code = resultSet.getString("CURRENCY_CODE");
     result.currency_entity = resultSet.getString("CURRENCY_ENTITY");
     result.currency_name = resultSet.getString("CURRENCY_NAME");
@@ -59,6 +138,58 @@ function convertToDateString(date) {
     return fullYear + "/" + month + "/" + dateOfMonth;
 }
 
+// update entity by id
+exports.updateMaster_currency = function() {
+    var input = request.readInputText();
+    var responseBody = JSON.parse(input);
+    var connection = datasource.getConnection();
+    try {
+        var sql = "UPDATE MASTER_CURRENCY SET ";
+        sql += "CURRENCY_CODE = ?";
+        sql += ",";
+        sql += "CURRENCY_ENTITY = ?";
+        sql += ",";
+        sql += "CURRENCY_NAME = ?";
+        sql += ",";
+        sql += "CURRENCY_NUMERIC_CODE = ?";
+        sql += ",";
+        sql += "CURRENCY_MINOR_UNIT = ?";
+        sql += " WHERE CURRENCY_ID = ?";
+        var statement = connection.prepareStatement(sql);
+        var i = 0;
+        statement.setString(++i, responseBody.currency_code);
+        statement.setString(++i, responseBody.currency_entity);
+        statement.setString(++i, responseBody.currency_name);
+        statement.setInt(++i, responseBody.currency_numeric_code);
+        statement.setInt(++i, responseBody.currency_minor_unit);
+        var id = responseBody.currency_id;
+        statement.setInt(++i, id);
+        statement.executeUpdate();
+		response.println(id);
+    } catch(e){
+        var errorCode = response.BAD_REQUEST;
+        exports.printError(errorCode, errorCode, e.message, sql);
+    } finally {
+        connection.close();
+    }
+};
+
+// delete entity
+exports.deleteMaster_currency = function(id) {
+    var connection = datasource.getConnection();
+    try {
+    	var sql = "DELETE FROM MASTER_CURRENCY WHERE " + exports.pkToSQL();
+        var statement = connection.prepareStatement(sql);
+        statement.setString(1, id);
+        statement.executeUpdate();
+        response.println(id);
+    } catch(e){
+        var errorCode = response.BAD_REQUEST;
+        exports.printError(errorCode, errorCode, e.message, sql);
+    } finally {
+        connection.close();
+    }
+};
 
 exports.countMaster_currency = function() {
     var count = 0;
@@ -72,7 +203,7 @@ exports.countMaster_currency = function() {
         }
     } catch(e){
         var errorCode = response.BAD_REQUEST;
-        exports.printError(errorCode, errorCode, e.message);
+        exports.printError(errorCode, errorCode, e.message, sql);
     } finally {
         connection.close();
     }
@@ -86,11 +217,17 @@ exports.metadataMaster_currency = function() {
 		properties: []
 	};
 	
-	var propertycurrency_code = {
-		name: 'currency_code',
-		type: 'string',
+	var propertycurrency_id = {
+		name: 'currency_id',
+		type: 'integer',
 	key: 'true',
 	required: 'true'
+	};
+    entityMetadata.properties.push(propertycurrency_id);
+
+	var propertycurrency_code = {
+		name: 'currency_code',
+		type: 'string'
 	};
     entityMetadata.properties.push(propertycurrency_code);
 
@@ -120,6 +257,27 @@ exports.metadataMaster_currency = function() {
 
 
 	response.println(JSON.stringify(entityMetadata));
+};
+
+exports.getPrimaryKeys = function() {
+    var result = [];
+    var i = 0;
+    result[i++] = 'CURRENCY_ID';
+    if (result === 0) {
+        throw new Error("There is no primary key");
+    } else if(result.length > 1) {
+        throw new Error("More than one Primary Key is not supported.");
+    }
+    return result;
+};
+
+exports.getPrimaryKey = function() {
+	return exports.getPrimaryKeys()[0].toLowerCase();
+};
+
+exports.pkToSQL = function() {
+    var pks = exports.getPrimaryKeys();
+    return pks[0] + " = ?";
 };
 
 exports.hasConflictingParameters = function(id, count, metadata) {
@@ -155,4 +313,3 @@ exports.printError = function(httpCode, errCode, errMessage, errContext) {
     	console.error(JSON.stringify(errContext));
     }
 }
-

@@ -7,7 +7,7 @@
 <meta name="description" content="">
 <meta name="author" content="">
 
-<title>Currency</title>
+<title>Currencies</title>
 
 <link rel="stylesheet"
 	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
@@ -37,7 +37,7 @@
 	<div id="wrap" ng-controller="ManageController">
 		<div class="row">
 			<div class="col-lg-12">
-		    	<h1 class="page-header">Currency</h1>
+		    	<h1 class="page-header">Currencies</h1>
 			</div>
 		</div>
 		<div class="container">
@@ -46,16 +46,18 @@
 			<table class="table table-condensed">
 				<thead>
 					<tr>
-						<th>CURRENCY_CODE</th>
-						<th>CURRENCY_ENTITY</th>
-						<th>CURRENCY_NAME</th>
-						<th>CURRENCY_NUMERIC_CODE</th>
-						<th>CURRENCY_MINOR_UNIT</th>
+						<th>#</th>
+						<th>Code</th>
+						<th>Entity</th>
+						<th>Name</th>
+						<th>Numeric</th>
+						<th>Minor Unit</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr class="selected-{{entry._selected_}}" ng-repeat="entry in data"
 						ng-click="showInfoForEntry(entry)">
+						<td>{{entry.currency_id}}</td>
 						<td>{{entry.currency_code}}</td>
 						<td>{{entry.currency_entity}}</td>
 						<td>{{entry.currency_name}}</td>
@@ -83,29 +85,34 @@
 			<div>
 				<!-- input form -->
 				<div>
-					<label>CURRENCY_CODE</label>
+					<label>#</label>
 					<input type="text" class="form-control" 
-						ng-model="selectedEntry.currency_code" readonly> <br>
+						ng-model="selectedEntry.currency_id" readonly> <br>
 					<br>
-					<label>CURRENCY_ENTITY</label>
+					<label>Code</label>
+					<input type="text" class="form-control" 
+						ng-model="selectedEntry.currency_code"
+						ng-readonly="operation == 'show'" required="required">
+					<br>
+					<label>Entity</label>
 					<input type="text" class="form-control" 
 						ng-model="selectedEntry.currency_entity"
 						ng-readonly="operation == 'show'" required="required">
 					<br>
-					<label>CURRENCY_NAME</label>
+					<label>Name</label>
 					<input type="text" class="form-control" 
 						ng-model="selectedEntry.currency_name"
 						ng-readonly="operation == 'show'" required="required">
 					<br>
-					<label>CURRENCY_NUMERIC_CODE</label>
-					<input type="text" class="form-control" 
+					<label>Numeric</label>
+					<input type="number" class="form-control" 
 						ng-model="selectedEntry.currency_numeric_code"
-						ng-readonly="operation == 'show'" required="required">
+						ng-readonly="operation == 'show'" required="required"></textarea>
 					<br>
-					<label>CURRENCY_MINOR_UNIT</label>
-					<input type="text" class="form-control" 
+					<label>Minor Unit</label>
+					<input type="number" class="form-control" 
 						ng-model="selectedEntry.currency_minor_unit"
-						ng-readonly="operation == 'show'" required="required">
+						ng-readonly="operation == 'show'" required="required"></textarea>
 					<br>
 				</div>
 				
@@ -251,7 +258,7 @@
 
 			function deleteEntry(entry){
 				var primaryKey;
-				primaryKey = "currency_code";
+				primaryKey = "currency_id";
 				var deleteUrl = url+"?"+primaryKey+"="+entry[primaryKey];
 				$http.delete(deleteUrl)
 				.success(function(){
