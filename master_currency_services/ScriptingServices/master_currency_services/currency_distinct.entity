@@ -1,0 +1,5 @@
+{
+  "fileName":"currency_distinct.js",
+  "tableName":"MASTER_CURRENCY_DISTINCT",
+  "tableType":"VIEW"
+}
